@@ -22,7 +22,8 @@ LowLevelRecorder lowLevelRecorder = new();
 
 List<ControlType> listKeyPressControlType = new()
 {
-    ControlType.Edit,
+    ControlType.ComboBox,
+    ControlType.Edit
 };
 List<AutomationEventHandlerBase> listKeyPressEventHandler = new();
 AutomationElement[] arrayPreviousKeyPressElement;
@@ -153,11 +154,11 @@ string GetXPath(AutomationElement element)
 
 void AddKeyPressStep(AutomationElement element, EventId eventId)
 {
-    if (eventId == automation.EventLibrary.Text.TextChangedEvent && element.Properties.IsKeyboardFocusable)
+    if (eventId == automation.EventLibrary.Text.TextChangedEvent && element.Properties.IsKeyboardFocusable && lowLevelRecorder.bKeyPress)
     {
         string xPath = GetXPath(element);
 
-        if (listStep.Last().xPath == xPath)
+        if (listStep.Count > 0 && listStep.Last().xPath == xPath)
         {
             listStep.Last().text = element.AsTextBox().Text;
         }
@@ -172,7 +173,7 @@ void AddKeyPressStep(AutomationElement element, EventId eventId)
         }
     }
 
-    RegisterAutomationEvent();
+    RegisterAutomationEvent(100);
 
     foreach (StepConfig step in listStep)
     {
@@ -242,6 +243,7 @@ void AddEvaluationStep()
         {
             controlType = element.ControlType.ToString(),
             xPath = xPath,
+            text = element.AsLabel().Text,
             bEvaluation = true
         });
     }
@@ -282,7 +284,7 @@ AutomationElement[] GetPreviousDesktopElement(List<ControlType> listControlType)
             try
             {
                 string dummy = $"{k.AutomationId},{k.Name},{k.ControlType}";
-                Console.WriteLine($"debug1 {dummy}");
+                // Console.WriteLine($"debug1 {dummy}");
                 return !k.IsOffscreen && listControlType.Contains(k.ControlType);
             }
             catch
@@ -295,7 +297,7 @@ AutomationElement[] GetPreviousDesktopElement(List<ControlType> listControlType)
     return arrayElement;
 }
 
-void RegisterAutomationEvent(bool bRefreshWindow = false)
+void RegisterAutomationEvent(int sleepTime = 1500)
 {
     try
     {
@@ -312,7 +314,7 @@ void RegisterAutomationEvent(bool bRefreshWindow = false)
         Attach2Process();
     }
 
-    Thread.Sleep(1500);
+    Thread.Sleep(sleepTime);
 
     window = app.GetMainWindow(automation);
     arrayPreviousKeyPressElement = window.FindAllDescendants();

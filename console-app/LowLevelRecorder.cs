@@ -19,6 +19,7 @@ public class LowLevelRecorder
     private Action setMouseClickStep = null;
     private Action addEvaluationStep = null;
 
+    public bool bKeyPress = true;
     public ClickType clickType { get; set; } = default;
     public Point mousePosition { get; set; }
 
@@ -26,12 +27,16 @@ public class LowLevelRecorder
     {
         if(nCode >= 0)
         {
+            bKeyPress = true;
             KBDLLHOOKSTRUCT keyPressData = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
 
             if((int)wParam == 0x100 && keyPressData.vkCode == 0xA2)
             {
                 Task.Run(() => addEvaluationStep());
             }
+
+            Thread.Sleep(100);
+            bKeyPress = false;
         }
 
         return 0;
